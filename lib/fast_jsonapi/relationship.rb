@@ -76,8 +76,10 @@ module FastJsonapi
     end
 
     def id_hash_from_record(record, record_types)
+      klass_name = record.class.respond_to?(:model_name) ? record.class.model_name.to_s : record.class.name
       # memoize the record type within the record_types dictionary, then assigning to record_type:
-      associated_record_type = record_types[record.class] ||= run_key_transform(record.class.name.demodulize.underscore)
+      associated_record_type = record_types[record.class] ||= run_key_transform(klass_name.demodulize.underscore)
+
       id_hash(record.id, associated_record_type)
     end
 
