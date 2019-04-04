@@ -273,7 +273,7 @@ module FastJsonapi
           pluralize_type: options[:pluralize_type],
           object_method_name: options[:object_method_name] || name,
           object_block: block,
-          serializer: compute_serializer_name(options[:serializer] || base_key_sym),
+          serializer_name: compute_serializer_name(options[:serializer] || base_key_sym),
           relationship_type: relationship_type,
           cached: options[:cached],
           polymorphic: fetch_polymorphic_option(options),
@@ -326,7 +326,7 @@ module FastJsonapi
             relationships_to_serialize = klass.relationships_to_serialize || {}
             relationship_to_include = relationships_to_serialize[parsed_include]
             raise ArgumentError, "#{parsed_include} is not specified as a relationship on #{klass.name}" unless relationship_to_include
-            klass = relationship_to_include.serializer.to_s.constantize unless relationship_to_include.polymorphic.is_a?(Hash)
+            klass = relationship_to_include.serializer unless relationship_to_include.polymorphic.is_a?(Hash)
           end
         end
       end
