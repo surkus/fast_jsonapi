@@ -12,7 +12,7 @@ describe FastJsonapi::ObjectSerializer do
     end
 
     after do
-      serializer.relationships_to_serialize = {}
+      MovieSerializer.relationships_to_serialize.delete(children.first)
     end
 
     context 'with namespace' do
@@ -120,7 +120,7 @@ describe FastJsonapi::ObjectSerializer do
     end
 
     after do
-      MovieSerializer.relationships_to_serialize = {}
+      MovieSerializer.relationships_to_serialize.delete(parent.first)
     end
 
     context 'with overrides' do
@@ -176,7 +176,7 @@ describe FastJsonapi::ObjectSerializer do
     end
 
     after do
-      MovieSerializer.relationships_to_serialize = {}
+      MovieSerializer.relationships_to_serialize.delete(partner.first)
     end
 
     context 'with overrides' do
