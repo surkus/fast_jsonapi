@@ -12,7 +12,7 @@ describe FastJsonapi::ObjectSerializer do
     end
 
     after do
-      serializer.relationships_to_serialize = {}
+      MovieSerializer.relationships_to_serialize.delete(children.first)
     end
 
     context 'with namespace' do
@@ -120,7 +120,7 @@ describe FastJsonapi::ObjectSerializer do
     end
 
     after do
-      MovieSerializer.relationships_to_serialize = {}
+      MovieSerializer.relationships_to_serialize.delete(parent.first)
     end
 
     context 'with overrides' do
@@ -176,7 +176,7 @@ describe FastJsonapi::ObjectSerializer do
     end
 
     after do
-      MovieSerializer.relationships_to_serialize = {}
+      MovieSerializer.relationships_to_serialize.delete(partner.first)
     end
 
     context 'with overrides' do
@@ -483,6 +483,77 @@ describe FastJsonapi::ObjectSerializer do
 
       it 'returns correct hash which type equals transformed set_type value' do
         expect(serializable_hash[:data][:type]).to eq :Films
+      end
+    end
+  end
+
+  describe '#pluralize_type' do
+    subject(:serializable_hash) { MovieSerializer.new(movie).serializable_hash }
+
+    before do
+      MovieSerializer.pluralize_type pluralize
+    end
+
+    after do
+      MovieSerializer.pluralize_type nil
+      MovieSerializer.set_type :movie
+    end
+
+    context 'when pluralize is true' do
+      let(:pluralize) { true }
+
+      it 'returns correct hash which type equals pluralized value' do
+        expect(serializable_hash[:data][:type]).to eq :movies
+      end
+    end
+
+    context 'when pluralize is false' do
+      let(:pluralize) { false }
+
+      it 'returns correct hash which type equals non-pluralized value' do
+        expect(serializable_hash[:data][:type]).to eq :movie
+      end
+    end
+  end
+
+  describe '#pluralize_type after #set_type' do
+    subject(:serializable_hash) { MovieSerializer.new(movie, include: [:actors]).serializable_hash }
+    let(:type_name) { :film }
+
+    before do
+      MovieSerializer.set_type type_name
+      MovieSerializer.pluralize_type true
+    end
+
+    after do
+      MovieSerializer.pluralize_type nil
+      MovieSerializer.set_type :movie
+    end
+
+    context 'when sets singular type name' do
+      it 'returns correct hash which type equals transformed set_type value' do
+        expect(serializable_hash[:data][:type]).to eq :films
+      end
+    end
+
+    context 'when sets plural type name' do
+      it 'returns correct hash which type equals transformed set_type value' do
+        expect(serializable_hash[:data][:type]).to eq :films
+      end
+    end
+
+    context 'when pluralizing a relationship type after #set_type' do
+      before do
+        ActorSerializer.pluralize_type true
+      end
+
+      after do
+        ActorSerializer.pluralize_type nil
+      end
+
+      it 'returns correct hash which relationship type equals transformed set_type value' do
+        expect(serializable_hash[:data][:relationships][:actors][:data][0][:type]).to eq(:actors)
+        expect(serializable_hash[:included][0][:type]).to eq(:actors)
       end
     end
   end

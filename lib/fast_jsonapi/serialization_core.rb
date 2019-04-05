@@ -16,6 +16,7 @@ module FastJsonapi
                       :cachable_relationships_to_serialize,
                       :uncachable_relationships_to_serialize,
                       :transform_method,
+                      :pluralized_type,
                       :record_type,
                       :record_id,
                       :cache_length,
@@ -122,7 +123,7 @@ module FastJsonapi
             next unless relationship_item.include_relationship?(record, params)
             unless relationship_item.polymorphic.is_a?(Hash)
               record_type = relationship_item.record_type
-              serializer = relationship_item.serializer.to_s.constantize
+              serializer = relationship_item.serializer
             end
             relationship_type = relationship_item.relationship_type
 

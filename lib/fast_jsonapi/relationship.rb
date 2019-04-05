@@ -1,15 +1,17 @@
 module FastJsonapi
   class Relationship
-    attr_reader :key, :name, :id_method_name, :record_type, :object_method_name, :object_block, :serializer, :relationship_type, :cached, :polymorphic, :conditional_proc, :transform_method, :links, :lazy_load_data
+    attr_reader :key, :base_key, :name, :id_method_name, :pluralized_type, :object_method_name, :object_block, :serializer_name, :relationship_type, :cached, :polymorphic, :conditional_proc, :transform_method, :links, :lazy_load_data
 
     def initialize(
       key:,
+      base_key:,
       name:,
       id_method_name:,
       record_type:,
+      pluralize_type:,
       object_method_name:,
       object_block:,
-      serializer:,
+      serializer_name:,
       relationship_type:,
       cached: false,
       polymorphic:,
@@ -19,12 +21,14 @@ module FastJsonapi
       lazy_load_data: false
     )
       @key = key
+      @base_key = base_key
       @name = name
       @id_method_name = id_method_name
-      @record_type = record_type
+      @pluralized_type = pluralize_type
+      @record_type = run_key_pluralization(record_type)
       @object_method_name = object_method_name
       @object_block = object_block
-      @serializer = serializer
+      @serializer_name = serializer_name
       @relationship_type = relationship_type
       @cached = cached
       @polymorphic = polymorphic
@@ -59,6 +63,16 @@ module FastJsonapi
       end
     end
 
+    def serializer
+      @serializer ||= @serializer_name.to_s.constantize
+    end
+
+    def record_type
+      @record_type || serializer.transformed_record_type
+    rescue NameError
+      run_key_transform(run_key_pluralization(base_key))
+    end
+
     private
 
     def ids_hash_from_record_and_relationship(record, params = {})
@@ -78,8 +92,8 @@ module FastJsonapi
     def id_hash_from_record(record, record_types)
       klass_name = record.class.respond_to?(:model_name) ? record.class.model_name.to_s : record.class.name
       # memoize the record type within the record_types dictionary, then assigning to record_type:
-      associated_record_type = record_types[record.class] ||= run_key_transform(klass_name.demodulize.underscore)
 
+      associated_record_type = record_types[record.class] ||= run_key_transform(run_key_pluralization(klass_name.demodulize.underscore))
       id_hash(record.id, associated_record_type)
     end
 
@@ -114,6 +128,15 @@ module FastJsonapi
     def run_key_transform(input)
       if self.transform_method.present?
         input.to_s.send(*self.transform_method).to_sym
+      else
+        input.to_sym
+      end
+    end
+
+    def run_key_pluralization(input)
+      return unless input
+      if self.pluralized_type
+        input.to_s.pluralize.to_sym
       else
         input.to_sym
       end
