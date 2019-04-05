@@ -127,6 +127,10 @@ module FastJsonapi
         subclass.meta_to_serialize = meta_to_serialize
       end
 
+      def transformed_record_type
+        run_key_transform(run_key_pluralization(record_type))
+      end
+
       def reflected_record_type
         return @reflected_record_type if defined?(@reflected_record_type)
 
@@ -263,13 +267,14 @@ module FastJsonapi
         end
         Relationship.new(
           key: options[:key] || run_key_transform(base_key),
+          base_key: run_key_transform(base_key_sym),
           name: name,
           id_method_name: compute_id_method_name(
             options[:id_method_name],
             "#{base_serialization_key}#{id_postfix}".to_sym,
             block
           ),
-          record_type: options[:record_type] || run_key_transform(base_key_sym),
+          record_type: options[:record_type],
           pluralize_type: options[:pluralize_type],
           object_method_name: options[:object_method_name] || name,
           object_block: block,

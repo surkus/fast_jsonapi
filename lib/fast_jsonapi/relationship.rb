@@ -1,9 +1,10 @@
 module FastJsonapi
   class Relationship
-    attr_reader :key, :name, :id_method_name, :record_type, :pluralized_type, :object_method_name, :object_block, :serializer_name, :relationship_type, :cached, :polymorphic, :conditional_proc, :transform_method, :links, :lazy_load_data
+    attr_reader :key, :base_key, :name, :id_method_name, :pluralized_type, :object_method_name, :object_block, :serializer_name, :relationship_type, :cached, :polymorphic, :conditional_proc, :transform_method, :links, :lazy_load_data
 
     def initialize(
       key:,
+      base_key:,
       name:,
       id_method_name:,
       record_type:,
@@ -20,6 +21,7 @@ module FastJsonapi
       lazy_load_data: false
     )
       @key = key
+      @base_key = base_key
       @name = name
       @id_method_name = id_method_name
       @pluralized_type = pluralize_type
@@ -62,7 +64,13 @@ module FastJsonapi
     end
 
     def serializer
-      @serializer_name.to_s.constantize
+      @serializer ||= @serializer_name.to_s.constantize
+    end
+
+    def record_type
+      @record_type || serializer.transformed_record_type
+    rescue NameError
+      run_key_transform(run_key_pluralization(base_key))
     end
 
     private
@@ -126,6 +134,7 @@ module FastJsonapi
     end
 
     def run_key_pluralization(input)
+      return unless input
       if self.pluralized_type
         input.to_s.pluralize.to_sym
       else
