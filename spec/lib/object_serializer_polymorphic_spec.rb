@@ -7,6 +7,13 @@ describe FastJsonapi::ObjectSerializer do
 
   class ChecklistItem
     attr_accessor :id, :name
+
+    def self.model_name
+      'ChecklistItem'
+    end
+
+    class Todo < self
+    end
   end
 
   class Car
@@ -36,15 +43,24 @@ describe FastJsonapi::ObjectSerializer do
     checklist_item
   end
 
+  let(:checklist_item_todo) do
+    checklist_item = ChecklistItem::Todo.new
+    checklist_item.id = 2
+    checklist_item.name = 'Do this todo!'
+    checklist_item
+  end
+
   context 'when serializing id and type of polymorphic relationships' do
     it 'should return correct type when transform_method is specified' do
       list = List.new
       list.id = 1
-      list.items = [checklist_item, car]
+      list.items = [checklist_item, checklist_item_todo, car]
       list_hash = ListSerializer.new(list).to_hash
       record_type = list_hash[:data][:relationships][:items][:data][0][:type]
       expect(record_type).to eq 'checklist-item'.to_sym
       record_type = list_hash[:data][:relationships][:items][:data][1][:type]
+      expect(record_type).to eq 'checklist-item'.to_sym
+      record_type = list_hash[:data][:relationships][:items][:data][2][:type]
       expect(record_type).to eq 'car'.to_sym
     end
   end
